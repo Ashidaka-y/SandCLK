@@ -4,18 +4,21 @@
  # @ Description: Simple Sand Clock
  '''
 
-import time
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QLabel, QTextEdit, QPushButton, QLineEdit, QVBoxLayout
+import time,sys,os
+from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QLabel, QTextEdit, QPushButton, QLineEdit, QVBoxLayout, QSystemTrayIcon,QMenu,QAction
 from PyQt5.QtGui import QPainter, QColor, QFont, QPen,QScreen
-from PyQt5 import QtGui
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt5 import QtGui, uic
+from PyQt5.QtCore import pyqtSignal, Qt, QTimer 
 
 
 class Info:
     version = '0.0.0.0'
     app_name = 'SandCLK'
 
+class SettingWindow(QWidget):
+    def __init__(self)->None:
+        super().__init__()
+        uic.loadUi('./Resource/SettingWindow.ui', self)
 
 class CoreWindow(QDialog):
     all_time = 0
@@ -35,6 +38,33 @@ class CoreWindow(QDialog):
         self.resize(80, 80)
         screen = self.screen()
         self.move(int(screen.size().width() / 2) - 40, 0)
+        self.tray_icon_init()
+    
+    def tray_icon_init(self):
+        # 初始化菜单单项
+        self.setting_action = QAction("Setting")
+        self.close_action = QAction("Close")
+
+        # 菜单单项连接方法
+        self.setting_action.triggered.connect(self.tray_icon_setting)
+        self.close_action.triggered.connect(self.tray_icon_close)
+
+        self.tray_icon_menu = QMenu()
+        self.tray_icon_menu.addAction(self.setting_action)
+        self.tray_icon_menu.addSeparator()
+        self.tray_icon_menu.addAction(self.close_action)
+
+        self.tray_icon = QSystemTrayIcon()
+        self.tray_icon.setIcon(QtGui.QIcon('./Resource/clock.ico'))
+        self.tray_icon.setContextMenu(self.tray_icon_menu)
+        self.tray_icon.show()
+
+    def tray_icon_close(self):
+        self.close()
+
+    def tray_icon_setting(self):
+        self.setting_wnd = SettingWindow()
+        self.setting_wnd.show()
 
     def start_tick(self, seconds):
         self.all_time = seconds
